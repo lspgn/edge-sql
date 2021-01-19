@@ -1,0 +1,39 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Navigate to repo
+      run: cd $GITHUB_WORKSPACE
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '14.x'
+    - run: 'echo kv_namespaces = [ { binding = \"SQLCSV\", id = \"$KVNS\" }] >> wrangler.toml'
+      shell: bash
+      env:
+        KVNS: ${{ secrets.KVNS }}
+    - name: Install deps
+      run: npm install
+    - name: Install Wrangler
+      run: npm i @cloudflare/wrangler@1.13.0 -g
+    - name: Install Workers script deps
+      run: npm install
+    - name: Build Workers script
+      run: wrangler build
+    - name: Wrangler auth check
+      run: wrangler whoami
+      env:
+        CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+    - name: Upload assets
+      run: wrangler publish
+      env:
+        CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}

@@ -1,0 +1,1 @@
+gcc -D NOEMS main_test.c sqlite3.c
